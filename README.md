@@ -59,14 +59,3 @@ Cada transacción se envía a la cola que corresponde a su banco.
 
 ---
 
-## Flujo general
-
-API (GET)
-↓
-Producer
-↓
-RabbitMQ
-↓
-Consumer
-↓
-API (POST)
