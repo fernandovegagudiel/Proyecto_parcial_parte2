@@ -1,115 +1,72 @@
-# Proyecto RabbitMQ – Procesamiento de Transacciones Bancarias
+# Proyecto RabbitMQ – Procesamiento de Transacciones
 
 ## Descripción
 
-Este proyecto implementa una arquitectura basada en mensajería utilizando RabbitMQ para procesar transacciones bancarias.
+Este proyecto muestra cómo usar **RabbitMQ** para enviar y procesar transacciones entre dos aplicaciones: un **Producer** y un **Consumer**.
 
-El sistema está dividido en dos aplicaciones principales:
+El **Producer** obtiene un lote de transacciones desde una API usando un **GET**. Luego cada transacción se envía a RabbitMQ.
 
-* **Producer:** obtiene un lote de transacciones desde una API externa utilizando una petición GET y publica cada transacción en RabbitMQ.
-* **Consumer:** escucha las colas de RabbitMQ, recibe las transacciones, agrega algunos datos adicionales y posteriormente envía la información a otra API mediante un POST.
+El **Consumer** escucha las colas de RabbitMQ, recibe las transacciones, les agrega algunos datos y finalmente las envía a otra API mediante un **POST**.
 
-El objetivo es demostrar cómo RabbitMQ permite desacoplar los sistemas y procesar información de forma asíncrona.
-
----
-
-# Arquitectura del Sistema
-
-El flujo general del sistema funciona de la siguiente manera:
-
-1. El **Producer** realiza una petición **GET** a una API externa para obtener un lote de transacciones.
-2. La respuesta JSON se convierte en objetos Java utilizando **ObjectMapper**.
-3. Cada transacción se envía a RabbitMQ a una cola dependiendo del banco destino.
-4. RabbitMQ almacena las transacciones en diferentes colas.
-5. El **Consumer** escucha las colas correspondientes.
-6. Cuando el Consumer recibe una transacción:
-
-   * Convierte el JSON nuevamente a objeto Java.
-   * Genera un identificador único para la transacción.
-   * Agrega información del estudiante (carnet, nombre y correo).
-7. Finalmente el Consumer envía la transacción modificada a una API mediante un **POST**.
+La idea es mostrar cómo RabbitMQ permite que los sistemas se comuniquen usando colas de mensajes.
 
 ---
 
-# Componentes del Proyecto
+## Cómo funciona el sistema
 
-## Producer
+El flujo es el siguiente:
 
-El Producer se encarga de:
+1. El **Producer** hace una petición **GET** para obtener un lote de transacciones.
+2. Cada transacción se envía a RabbitMQ.
+3. RabbitMQ guarda las transacciones en colas según el banco destino.
+4. El **Consumer** escucha esas colas.
+5. Cuando llega una transacción, el Consumer la procesa.
+6. Luego envía la información a una API mediante un **POST**.
 
-* Realizar una petición **GET** a una API externa.
-* Convertir la respuesta JSON a objetos Java.
-* Crear colas en RabbitMQ según el banco destino.
-* Publicar cada transacción en la cola correspondiente.
+---
 
-Las colas utilizadas son:
+## Colas utilizadas
+
+Las colas se crean dependiendo del banco destino de la transacción:
 
 * BANRURAL
 * GYT
 * BAC
 * BI
 
-Cada transacción se envía a la cola que corresponde al banco destino.
+Cada transacción se envía a la cola que corresponde a su banco.
 
 ---
 
-## RabbitMQ
-
-RabbitMQ funciona como un intermediario de mensajes.
-
-Su función en el sistema es:
-
-* Recibir los mensajes enviados por el Producer.
-* Guardarlos en colas.
-* Entregar los mensajes al Consumer cuando estén disponibles.
-
-Esto permite que los sistemas funcionen de forma desacoplada.
-
----
-
-## Consumer
-
-El Consumer se conecta a RabbitMQ y escucha las colas de los diferentes bancos.
-
-Cuando recibe una transacción realiza los siguientes pasos:
-
-1. Convierte el mensaje JSON a un objeto `Transaccion`.
-2. Genera un identificador único para la transacción.
-3. Agrega información adicional como carnet, nombre y correo.
-4. Convierte nuevamente el objeto a JSON.
-5. Envía la información a una API externa mediante una petición **POST**.
-6. Si la API responde correctamente (200 o 201), el mensaje se confirma en RabbitMQ.
-
----
-
-# Flujo del Sistema
-
-API de Transacciones
-↓
-Producer (GET)
-↓
-RabbitMQ (colas por banco)
-↓
-Consumer (procesamiento)
-↓
-POST a la API de almacenamiento
-
----
-
-# Tecnologías Utilizadas
+## Tecnologías usadas
 
 * Java
 * RabbitMQ
+* Docker
 * HTTP Client
-* Jackson (ObjectMapper)
-* API REST
+* Jackson (para manejar JSON)
 
 ---
 
-# Ejecución del Proyecto
+## Cómo ejecutar el proyecto
 
-1. Iniciar RabbitMQ.
-2. Ejecutar el **Consumer** para que empiece a escuchar las colas.
-3. Ejecutar el **Producer**.
-4. El Producer obtendrá las transacciones mediante GET y las enviará a RabbitMQ.
-5. El Consumer recibirá las transacciones y las enviará a la API mediante POST.
+1. Iniciar RabbitMQ usando Docker.
+2. Abrir el panel de RabbitMQ en:
+   `http://localhost:15672`
+3. Ejecutar el **Consumer**.
+4. Ejecutar el **Producer**.
+5. Ver cómo las transacciones pasan por las colas y luego se envían a la API.
+
+---
+
+## Flujo general
+
+API (GET)
+↓
+Producer
+↓
+RabbitMQ
+↓
+Consumer
+↓
+API (POST)
