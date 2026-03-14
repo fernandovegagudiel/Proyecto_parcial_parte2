@@ -14,7 +14,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class Productor {
-	public static void main(String[] args) {
+
+    public static void main(String[] args) {
+
         ConnectionFactory factory = new ConnectionFactory();
 
         factory.setHost("127.0.0.1");
@@ -35,26 +37,53 @@ public class Productor {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            
+
             LoteTransaccion lote = mapper.readValue(response.body(), LoteTransaccion.class);
 
             for (Transaccion tx : lote.transacciones) {
-                String bank = tx.bancoDestino.toUpperCase().trim();
-                
-                channel.queueDeclare(bank, true, false, false, null);
+
+                String colaDestino;
+                String estado;
+
+                // VALIDACIÓN DEL MONTO
+                if (tx.monto > 4000) {
+
+                    colaDestino = tx.bancoDestino.toUpperCase().trim();
+                    estado = "ACEPTADA";
+
+                } else {
+
+                    colaDestino = "cola_rechazadas";
+                    estado = "RECHAZADA";
+                }
+
+                // CREAR COLA SI NO EXISTE
+                channel.queueDeclare(colaDestino, true, false, false, null);
 
                 String payload = mapper.writeValueAsString(tx);
-                
-                channel.basicPublish("", bank, MessageProperties.PERSISTENT_TEXT_PLAIN, payload.getBytes());
 
-                System.out.println("Publicada transacción " + tx.idTransaccion + " en cola: " + bank);
+                // ENVIAR MENSAJE
+                channel.basicPublish(
+                        "",
+                        colaDestino,
+                        MessageProperties.PERSISTENT_TEXT_PLAIN,
+                        payload.getBytes()
+                );
+
+                // REGISTRO EN CONSOLA
+                System.out.println(
+                        "ID: " + tx.idTransaccion +
+                        " | Monto: Q" + tx.monto +
+                        " | Estado: " + estado +
+                        " | Cola destino: " + colaDestino
+                );
             }
 
             System.out.println("Proceso terminado. Lote enviado.");
 
         } catch (Exception ex) {
+
             System.err.println("Error: " + ex.getMessage());
         }
     }
-
 }
