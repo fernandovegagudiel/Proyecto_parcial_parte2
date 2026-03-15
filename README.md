@@ -1,5 +1,6 @@
 # Proyecto RabbitMQ – Procesamiento de Transacciones
-
+## video 
+https://drive.google.com/file/d/17n7RcaqbW2rci_ktHmfFos4UfvwOVid6/view?usp=drive_link
 ## Descripción
 
 Este proyecto muestra cómo usar **RabbitMQ** para enviar y procesar transacciones entre dos aplicaciones: un **Producer** y un **Consumer**.
